@@ -1,9 +1,10 @@
-# Deep Learning for Archival Aerial Photography: Understanding Long-Term Socioenvironmental Change in Namibia
+# Deep Learning for Archival Aerial Photography: Mapping Long-Term Socioenvironmental Change in Namibia
 
-This repository contains code and utilities for preparing geospatial imagery and labels, training semantic segmentation models, running inference, post-processing, and evaluation for my IW.
+This repository contains only the code and for preparing imagery and labels, training the models, segmenting, polygonization,
+post-processing, and evaluation for my IW. All data is removed for privacy.
 
 Quick layout
-- `0_original_data/` — raw imagery and original shapefiles
+- `0_original_data/` — (REMOVED IN THIS VERSION) raw imagery and original shapefiles
 - `1_threshold_data/` — compute and apply size thresholds to filter small polygons
 - `2_crop_data/` — crop large imagery to area of interest defined by labels
 - `3_normalize_1943/` — remove streaks and normalize 1943 imagery to 1970 distribution
@@ -13,7 +14,7 @@ Quick layout
 - `6_predict_polygonize/` — inference and polygonization utilities
 - `7_pseudo_labeling/` — tune and create pseudo labels
 - `8_train_predict_evaluate/` — evaluation and run-through of entire process on combined datasets
-- `info/` — debugging outputs and analysis
+
 
 Requirements & creating the environment
 - Create conda environments for training and all other uses
@@ -29,7 +30,7 @@ conda env create -f IW_ml_mac.yml
 conda activate IW_geo
 ```
 
-Each step by folder:
+Each step by folder with example commands:
 
 1) 1_threshold_data — compute & filter small polygons
 
@@ -40,11 +41,6 @@ python 1_threshold_data/compute_optimal_thresholds.py \
   --shapefile ../0_original_data/1970_data/1970_labels.shp \
   --class_field Name \
   --outdir ./1_threshold_data/1970_data/
-
-python 1_threshold_data/compute_optimal_thresholds.py \
-  --shapefile ../0_original_data/1943_data/1943_labels.shp \
-  --class_field Name \
-  --outdir ./1_threshold_data/1943_data/
 ```
 
 - Filter small polygons using the CSV of thresholds:
@@ -55,17 +51,11 @@ python 1_threshold_data/filter_small_polygons.py \
   --output ./1_threshold_data/1970_data/1970_labels_filtered.shp \
   --class_field Name \
   --thresholds ./1_threshold_data/1970_data/optimal_thresholds.csv
-
-python 1_threshold_data/filter_small_polygons.py \
-    --input ../0_original_data/1943_data/1943_labels.shp \
-    --output ./1_threshold_data/1943_data/1943_labels_filtered.shp \
-    --class_field Name \
-    --thresholds ./1_threshold_data/1943_data/optimal_thresholds.csv
 ```
 
 2) 2_crop_data — crop imagery to label extents
 
-- Crop imagery and create rings for pseudo-labeling (example):
+- Crop imagery and create rings for pseudo-labeling:
 
 ```bash
 python 2_crop_data/cropping.py \
@@ -99,7 +89,7 @@ python 3_normalize_1943/normalize_1943.py \
 
 4) 4a_tile_labeled_data — prepare labeled tiles (train/val/test)
 
-- Create labeled tiles (examples):
+- Create labeled tiles:
 
 ```bash
 python 4a_tile_labeled_data/prepare_labeled_tiles.py \
@@ -107,14 +97,6 @@ python 4a_tile_labeled_data/prepare_labeled_tiles.py \
   --class_field Name \
   --imagery_path ../2_crop_data/1970_data/cropped_Aerial1970.tif \
   --output_dir ./4a_tile_labeled_data/1970_tiles/ \
-  --tile_size 1024 \
-  --splits 80 10 10
-
-python 4a_tile_labeled_data/prepare_labeled_tiles.py \
-  --shapefile_path ../1_threshold_data/1943_data/1943_labels_filtered.shp \
-  --class_field Name \
-  --imagery_path ../3_normalize_1943/outputs/Aerial_1943_norm.tif \
-  --output_dir ./4a_tile_labeled_data/1943_tiles/ \
   --tile_size 1024 \
   --splits 80 10 10
 ```
@@ -153,10 +135,6 @@ python3 5_train/train.py \
   --require_gpu
 ```
 
-Notes:
-- `--class_weights` computes inverse-frequency weights from training masks and saves them under `models/`.
-- `--require_gpu` will cause the script to fail early if no CUDA GPU is available (useful in multi-host scripts when GPU availability is required).
-
 7) 6_predict_polygonize — inference + polygonize
 
 - Predict on tiles and produce polygon outputs:
@@ -174,30 +152,6 @@ python ./6_predict_polygonize/inference_only.py \
     --save-probs-tif \
     --combined-pred
 
-python ./6_predict_polygonize/inference_only.py \
-    --ckpt ./5_train/models/baseline/last.ckpt \
-    --input-dir ./4a_tile_labeled_data/1970_tiles/val/imagery \
-    --outdir ./6_predict_polygonize/predictions/baseline_val \
-    --save-probs-npy \
-    --save-probs-tif \
-    --combined-pred
-
-python ./6_predict_polygonize/inference_only.py \
-    --ckpt ./5_train/models/baseline/last.ckpt \
-    --input-dir ./4a_tile_labeled_data/1970_tiles/test/imagery \
-    --outdir ./6_predict_polygonize/predictions/baseline_test \
-    --save-probs-npy \
-    --save-probs-tif \
-    --combined-pred
-
-python ./6_predict_polygonize/inference_only.py \
-    --ckpt ./5_train/models/baseline_1943/last.ckpt \
-    --input-dir ./4a_tile_labeled_data/1943_tiles/test/imagery \
-    --outdir ./6_predict_polygonize/predictions/baseline_1943 \
-    --save-probs-npy \
-    --save-probs-tif \
-    --combined-pred
-
 conda activate IW_geo
 
 python ./6_predict_polygonize/polygonize.py \
@@ -209,36 +163,6 @@ python ./6_predict_polygonize/polygonize.py \
   --peak-min-distance 3 \
   --write-counts \
   --counts-out ./6_predict_polygonize/predictions/baseline_pseudo/pred_counts.csv 
-
-python ./6_predict_polygonize/polygonize.py \
-  --in-tif ./6_predict_polygonize/predictions/baseline_val/predictions/ \
-  --prob-npy ./6_predict_polygonize/predictions/baseline_val/probmaps/ \
-  --out-tif ./6_predict_polygonize/predictions/baseline_val/cleaned/ \
-  --min-area-table ./1_threshold_data/1970_data/optimal_thresholds.csv \
-  --prob-threshold 0.30 \
-  --peak-min-distance 3 \
-  --write-counts \
-  --counts-out ./6_predict_polygonize/predictions/baseline_val/pred_counts.csv 
-
-python ./6_predict_polygonize/polygonize.py \
-  --in-tif ./6_predict_polygonize/predictions/baseline_test/predictions/ \
-  --prob-npy ./6_predict_polygonize/predictions/baseline_test/probmaps/ \
-  --out-tif ./6_predict_polygonize/predictions/baseline_test/cleaned/ \
-  --min-area-table ./1_threshold_data/1970_data/optimal_thresholds.csv \
-  --prob-threshold 0.30 \
-  --peak-min-distance 3 \
-  --write-counts \
-  --counts-out ./6_predict_polygonize/predictions/baseline_test/pred_counts.csv 
-
-python ./6_predict_polygonize/polygonize.py \
-  --in-tif ./6_predict_polygonize/predictions/baseline_1943/predictions/ \
-  --prob-npy ./6_predict_polygonize/predictions/baseline_1943/probmaps/ \
-  --out-tif ./6_predict_polygonize/predictions/baseline_1943/cleaned/ \
-  --min-area-table ./1_threshold_data/1943_data/optimal_thresholds.csv \
-  --prob-threshold 0.30 \
-  --peak-min-distance 3 \
-  --write-counts \
-  --counts-out ./6_predict_polygonize/predictions/baseline_1943/pred_counts.csv 
 ```
 
 8) 7_pseudo_labeling — tune and create pseudo labels
@@ -253,7 +177,7 @@ python 7_pseudo_labeling/tune_pseudolabels.py \
   --tune-outdir ./7_pseudo_labeling/tuning/ \
   --lower-start 0.02 --lower-stop 0.12 --lower-step 0.01 \
   --upper-start 0.88 --upper-stop 0.98 --upper-step 0.01 \
-  --require-all-classes --objective macro_f1 --iou-thresh 0.5 --num-workers 4 --verbose
+  --require-all-classes --objective macro_f1 --iou-thresh 0.5 --num-workers 4
 
 python 7_pseudo_labeling/create_pseudolabels.py \
   --pred-dir ../6_predict_polygonize/predictions/baseline_pseudo/polygons \
@@ -264,5 +188,17 @@ python 7_pseudo_labeling/create_pseudolabels.py \
 
 9) 8_train_predict_evaluate — end-to-end run (train on pseudo-labeled data, predict, evaluate)
 
-- Example workflow includes preparing tiles from merged labels, training, predicting, polygonizing and evaluating. See `8_train_predict_evaluate/instructions.txt` for detailed example commands.
+- Combines the commands from the previous step to evaluate:
 
+```bash
+  python evaluation.py \
+    --min_class_index 1 \
+    --imagery_dir_path ./1970_tiles_post_pseudo/test/imagery/ \
+    --mask_dir_path ./1970_tiles_post_pseudo/test/mask/ \
+    --predictions_dir_path ./predictions/baseline_full/cleaned/ \
+    --output_dir_path ./output/1970_results/ \
+    --metrics_subdir metrics \
+    --imagery_year 1970 \
+    --iou_threshold 0.5 \
+    --overwrite --verbose
+```
