@@ -199,5 +199,5 @@ python 7_pseudo_labeling/create_pseudolabels.py \
     --metrics_subdir metrics \
     --imagery_year 1970 \
     --iou_threshold 0.5 \
-    --overwrite --verbose
+    --overwrite
 ```

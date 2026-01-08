@@ -8,23 +8,23 @@ from rasterio.features import shapes
 from shapely.geometry import shape
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-import cupy as cp
 
+# try to use cupy if available for GPU speedups, otherwise fall back to numpy
 try:
+    import cupy as cp
     _gpu_available = cp.cuda.runtime.getDeviceCount() > 0
     if _gpu_available:
         xp = cp
         to_numpy = cp.asnumpy
         print("gpu detected")
     else:
-        import numpy as np
         xp = np
         to_numpy = lambda x: x
         print("using cpu")
-except Exception as e:
+except Exception:
     xp = np
     to_numpy = lambda x: x
-    print(f"using numpy")
+    print("using numpy")
 
 CLASS_COL = "class_id"
 

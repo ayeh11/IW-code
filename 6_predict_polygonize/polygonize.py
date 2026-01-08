@@ -189,8 +189,7 @@ def process_tile(in_tif, prob_npy, out_tif, min_area_table, prob_threshold, peak
     min_area_px = max(1, int(round(min_area_trees / px_area_m2)))
     refined = split_trees_circle(prob3, mask, px_area_m2, min_area_px,
                                  prob_thr=prob_threshold,
-                                 min_dist=peak_min_distance,
-                                 base_name=out_path.stem)
+                                 min_dist=peak_min_distance)
     refined = filter_omutis(refined, px_area_m2,
                             min_area_table,
                             class_id=CLASS_ID_OMUTIS,
@@ -240,17 +239,17 @@ def main():
                     peak_min_distance=args.peak_min_distance
                 )
                 processed_paths.append(out)
+
+                if args.write_counts:
+                    with rasterio.open(out) as src_ref:
+                        refined_mask = src_ref.read(1)
+
+                    row = {"file": tif.name}
+                    row.update(count_polygons(refined_mask))
+
+                    append_csv(args.counts_out, row)
             except Exception as e:
                 print(f"[ERROR] Failed on {tif.name}: {e}")
-
-            if args.write_counts:
-                with rasterio.open(out) as src_ref:
-                    refined_mask = src_ref.read(1)
-
-                row = {"file": tif.name}
-                row.update(count_polygons(refined_mask))
-
-                append_csv(args.counts_out, row)
 
         if args.merged_out and processed_paths:
             try:
@@ -277,7 +276,7 @@ def main():
 
     else:
         # single tile mode
-        process_tile(
+        out = process_tile(
             in_tif=in_tif_path,
             prob_npy=prob_path,
             out_tif=out_tif_path,
@@ -286,7 +285,7 @@ def main():
             peak_min_distance=args.peak_min_distance
         )
 
-        if args.write_counts:
+        if args.write_counts and out is not None:
             with rasterio.open(out) as src_ref:
                 refined_mask = src_ref.read(1)
             row = {"file": Path(args.in_tif).name}

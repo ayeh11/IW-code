@@ -247,6 +247,15 @@ def evaluate_single_tile(true_file_path: str,
     png_norm = os.path.join(metrics_dir_path, f"{tile_id}_confusion_matrix_polygon_norm.png")
     plot_conf_matrix(cnf, class_names, title, png_raw, normalize=False)
     plot_conf_matrix(cnf, class_names, title, png_norm, normalize=True)
+    # write per-tile metrics CSV (used by batch combiner)
+    metrics_df = pd.DataFrame([row])
+    metrics_csv = base + ".csv"
+    metrics_df.to_csv(metrics_csv, index=False)
+
+    # write confusion numeric CSV for batch combination
+    cnf_df = pd.DataFrame(cnf, index=class_names, columns=class_names)
+    cnf_csv = os.path.join(metrics_dir_path, f"{tile_id}_confusion_matrix_polygon.csv")
+    cnf_df.to_csv(cnf_csv)
 
 
 def get_imagery_files(imagery_dir, extensions=(".tif", ".tiff")):
