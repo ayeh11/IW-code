@@ -1,7 +1,6 @@
 # Deep Learning for Archival Aerial Photography: Mapping Long-Term Socioenvironmental Change in Namibia
 
-This repository contains only the code and for preparing imagery and labels, training the models, segmenting, polygonization,
-post-processing, and evaluation for my IW. All data is removed for privacy.
+This repository contains only the code and for preparing imagery and labels, training the models, segmenting, polygonization,post-processing, and evaluation for my IW. Due to privacy issues with large scale aerial imagery, the data cannot be put onto a public repository. Please contact me directly if example data is needed. Thank you for your understanding.
 
 Quick layout
 - `0_original_data/` — (REMOVED IN THIS VERSION) raw imagery and original shapefiles
