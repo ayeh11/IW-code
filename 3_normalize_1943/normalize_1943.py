@@ -5,12 +5,14 @@ import rasterio
 import os
 
 def read_grayscale_tif(path):
+    # read a single-band tif 
     with rasterio.open(path) as src:
         arr = src.read(1).astype(np.float32)
         profile = src.profile
     return arr, profile
 
 def main(source_path, target_path, output_path):
+    # match histogram of source to target and write normalized output
     source, src_profile = read_grayscale_tif(source_path)
     target, tgt_profile = read_grayscale_tif(target_path)
 

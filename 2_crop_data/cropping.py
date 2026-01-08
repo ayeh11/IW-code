@@ -15,7 +15,9 @@ def ensure_dir(path):
         os.makedirs(path, exist_ok=True)
 
 
+# crop tif to bounding box of a shapefile
 def crop_tif_to_shp_bbox(tif_path, shp_path, output_path):
+    """crop to bounding box of shapefile"""
     shapefile = gpd.read_file(shp_path)
     if shapefile.empty:
         raise ValueError("empty")
@@ -50,6 +52,7 @@ def crop_tif_to_shp_bbox(tif_path, shp_path, output_path):
             dest.write(data)
 
 
+# save a buffered zone
 def save_ring_crop(tif_path, shp_path, ring_output_path, ring_buffer, nodata_value=None):
     """buffer zone"""
     gdf = gpd.read_file(shp_path)
@@ -110,6 +113,7 @@ def save_ring_crop(tif_path, shp_path, ring_output_path, ring_buffer, nodata_val
     return outer.bounds
 
 
+# save combined crop of buffer and original zones
 def save_combined_crop(tif_path, shp_path, ring_buffer, output_path):
     """buffer zone and original"""
     gdf = gpd.read_file(shp_path)

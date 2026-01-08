@@ -6,6 +6,7 @@ import numpy as np
 
 def tile_raster(input_path, output_dir, tile_size=1024, overlap=0, stride=None,
                 nodata_override=None):
+    # tile a raster into fixed-size tiles 
     os.makedirs(output_dir, exist_ok=True)
 
     if stride is None:

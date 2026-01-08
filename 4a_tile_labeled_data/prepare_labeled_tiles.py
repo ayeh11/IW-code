@@ -19,6 +19,7 @@ ID2NAME = {v: k for k, v in LABELS.items()}
 
 
 def shapefile_to_mask(shapefile_path, imagery_path, output_mask_path, class_field, all_touched=True):
+    # make a raster mask from a shapefile of labeled polygons
     ''' make masks from labels '''
     with rasterio.open(imagery_path) as src:
         transform, crs, height, width = src.transform, src.crs, src.height, src.width
@@ -65,6 +66,7 @@ def shapefile_to_mask(shapefile_path, imagery_path, output_mask_path, class_fiel
 
 
 def _count_polygons_from_mask(mask_arr):
+    # count polygons per class id from a raster mask
     poly_counts = defaultdict(int)
     try:
         for _, val in rio_shapes(mask_arr, mask=mask_arr != 0, transform=Affine.identity()):
@@ -76,11 +78,13 @@ def _count_polygons_from_mask(mask_arr):
     return dict(poly_counts)
 
 def _tile_dirs(base_dir):
+    # create train/val/test directories for imagery and mask
     for split in ("train", "val", "test"):
         for sub in ("imagery", "mask"):
             os.makedirs(os.path.join(base_dir, split, sub), exist_ok=True)
 
 def ids_to_names(d, include_background=False):
+    # map class ids to human-readable names, optionally include background
     out = {}
     for k, v in d.items():
         cid = int(k)
@@ -91,6 +95,7 @@ def ids_to_names(d, include_background=False):
 
 
 def tile_and_split(imagery_path, mask_path, out_dir, tile_size=1024, splits=(80,10,10), seed=42):
+    # tile labeled imagery and masks and split into train/val/test sets
     ''' tile labeled data and split into train/val/test '''
     random.seed(seed); np.random.seed(seed)
 
@@ -147,7 +152,7 @@ def tile_and_split(imagery_path, mask_path, out_dir, tile_size=1024, splits=(80,
         if not candidates:
             raise RuntimeError("No tiles with labeled pixels found.")
 
-        # group by class-combo signature (ignoring 0)
+        # group by class
         groups = defaultdict(list)
         for t in candidates:
             present = tuple(sorted([c for c in t["class_pixels"].keys() if c > 0]))
@@ -164,7 +169,6 @@ def tile_and_split(imagery_path, mask_path, out_dir, tile_size=1024, splits=(80,
             n = len(tiles)
             n_train = int(round(n * train_p))
             n_val = int(round(n * val_p))
-            # ensure total counts exactly n
             n_train = min(n_train, n) 
             n_val   = min(n_val, n - n_train)
             n_test  = n - n_train - n_val

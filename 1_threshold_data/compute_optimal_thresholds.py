@@ -9,12 +9,14 @@ import pandas as pd
 LABELS = ["Omuti", "BigTrees"]
 
 def compute_otsu_threshold(areas):
+    # compute otsu threshold on log-transformed area values
     log_areas = np.log10(areas + 1e-6)
     t_log = threshold_otsu(log_areas)
     t_linear = 10 ** t_log
     return t_linear, t_log
 
 def analyze_shapefile(path, class_field, outdir):
+    # analyze shapefile and compute class-specific area thresholds and plots
     os.makedirs(outdir, exist_ok=True)
     gdf = gpd.read_file(path)
     if gdf.crs.is_geographic:

@@ -20,6 +20,7 @@ def ensure_dir(p):
 
 
 def load_model(ckpt, device):
+    # load a trained semantic segmentation model from checkpoint
     model = SemanticSegmentationTask.load_from_checkpoint(
         ckpt, strict=False, map_location=device, weights=None
     )
@@ -28,6 +29,7 @@ def load_model(ckpt, device):
 
 
 def read_tif_as_tensor(path, repeat_bands=0, force_channels=0):
+    # read tif and normalize
     with rasterio.open(path) as src:
         img = src.read().astype(np.float32)
         meta = src.meta.copy()
@@ -56,6 +58,7 @@ def read_tif_as_tensor(path, repeat_bands=0, force_channels=0):
 
 
 def save_mask(mask, meta, out):
+    # save mask to tif
     ensure_dir(Path(out).parent)
     meta2 = meta.copy()
     meta2.update(count=1, dtype=rasterio.uint8, compress="lzw")
@@ -65,6 +68,7 @@ def save_mask(mask, meta, out):
 
 
 def save_probs(probs, meta, out_npy, out_tif=None):
+    # save probability maps as npy
     ensure_dir(Path(out_npy).parent)
     np.save(out_npy, probs.astype(np.float32))
 
@@ -77,7 +81,7 @@ def save_probs(probs, meta, out_npy, out_tif=None):
 
 
 def build_combined_prediction(pred_tif_paths, out_path):
-
+    # merge prediction tiles into a single mosaic tif
     if not pred_tif_paths:
         print("[WARN] No prediction tiles found; skipping mosaic.")
         return
@@ -106,6 +110,7 @@ def build_combined_prediction(pred_tif_paths, out_path):
 
 
 def predict_tile(model, device, img_path, outdir, save_probs_npy, save_probs_tif):
+    # run model inference on a single image tile and save mask and probs
     tic = time.time()
 
     tensor, meta = read_tif_as_tensor(img_path)

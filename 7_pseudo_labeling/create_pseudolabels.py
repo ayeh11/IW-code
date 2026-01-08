@@ -20,7 +20,9 @@ def ensure_dir(p: str) -> None:
     os.makedirs(p, exist_ok=True)
 
 def vectorize_tif_masks(mask_dir: str, background=0) -> gpd.GeoDataFrame:
+    # vectorize training mask tifs into polygons with class ids
     tif_files = sorted(glob.glob(os.path.join(mask_dir, "*.tif")))
+        
     if not tif_files:
         raise SystemExit(f"[ERROR] No .tif training masks found in {mask_dir}")
 
@@ -47,7 +49,9 @@ def vectorize_tif_masks(mask_dir: str, background=0) -> gpd.GeoDataFrame:
     return gdf
 
 def load_predictions(pred_dir: str) -> gpd.GeoDataFrame:
+    # load predicted mask tifs and vectorize to polygons
     tif_files = sorted(glob.glob(os.path.join(pred_dir, "*.tif")))
+        
     if tif_files:
         geoms, class_ids, crs = [], [], None
 
@@ -74,6 +78,7 @@ def load_predictions(pred_dir: str) -> gpd.GeoDataFrame:
 
 
 def compute_empirical_pvalues(train_gdf: gpd.GeoDataFrame, pred_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    # compute empirical p-values for predicted polygon areas
     if train_gdf.crs is None:
         raise SystemExit("Train GPKG has no CRS; cannot compute areas meaningfully.")
     if pred_gdf.crs != train_gdf.crs:
@@ -102,11 +107,13 @@ def compute_empirical_pvalues(train_gdf: gpd.GeoDataFrame, pred_gdf: gpd.GeoData
 
 
 def apply_bounds(pred_scored: gpd.GeoDataFrame, lower: float, upper: float) -> gpd.GeoDataFrame:
+    # filter scored predictions by p-value bounds
     kept = pred_scored[(pred_scored["p_value"] >= lower) & (pred_scored["p_value"] <= upper)].copy()
     return kept[[CLASS_COL, "p_value", "geometry"]]
 
 
 def write_filtered(gdf: gpd.GeoDataFrame, out_gpkg: str) -> str:
+    # write filtered geodataframe to gpkg
     ensure_dir(os.path.dirname(out_gpkg))
     _, ext = os.path.splitext(out_gpkg)
     ext = ext.lower()
@@ -129,7 +136,7 @@ def write_filtered(gdf: gpd.GeoDataFrame, out_gpkg: str) -> str:
 
 
 def merge_train_and_pseudo(train_gdf: gpd.GeoDataFrame, pseudo_path: str, merge_out: str) -> str:
-
+    # merge training gdf with pseudo labels
     pseudo = gpd.read_file(pseudo_path)
     if pseudo.crs != train_gdf.crs:
         pseudo = pseudo.to_crs(train_gdf.crs)

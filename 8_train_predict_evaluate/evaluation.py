@@ -47,6 +47,8 @@ def set_up_parser() -> argparse.ArgumentParser:
 def stem(p: str) -> str:
     return os.path.splitext(os.path.basename(p))[0]
 
+
+# verify basenames match between gt and pred
 def ensure_same_name_or_error(gt_path: str, pred_path: str):
     s_gt = stem(gt_path)
     s_pr = stem(pred_path)
@@ -55,6 +57,7 @@ def ensure_same_name_or_error(gt_path: str, pred_path: str):
 
     raise ValueError(f"Basenames must match (or pred may be <base>_split).\n  GT:   {s_gt}\n  Pred: {s_pr}")
 
+# open raster and return array, transform, crs and shape
 def open_raster(path: str):
     with rasterio.open(path) as src:
         arr = src.read(1)
@@ -64,16 +67,18 @@ def open_raster(path: str):
     return arr, tfm, crs, shape
 
 
+# check that ground truth and prediction rasters align exactly
 def check_alignment(gt_tfm, gt_crs, gt_shape, pr_tfm, pr_crs, pr_shape):
     same = (gt_shape == pr_shape and gt_crs == pr_crs and
-            abs(gt_tfm.a - pr_tfm.a) < 1e-9 and
-            abs(gt_tfm.e - pr_tfm.e) < 1e-9 and
-            abs(gt_tfm.c - pr_tfm.c) < 1e-6 and
-            abs(gt_tfm.f - pr_tfm.f) < 1e-6)
+        abs(gt_tfm.a - pr_tfm.a) < 1e-9 and
+        abs(gt_tfm.e - pr_tfm.e) < 1e-9 and
+        abs(gt_tfm.c - pr_tfm.c) < 1e-6 and
+        abs(gt_tfm.f - pr_tfm.f) < 1e-6)
     if not same:
         raise ValueError("GT and prediction rasters must share grid/CRS/transform.")
 
 
+# vectorize connected components for a given class id from raster mask
 def gt_components_for_class(mask_arr: np.ndarray, transform, class_id: int):
     bin_arr = (mask_arr == class_id).astype(np.uint8)
     geoms = []
@@ -85,6 +90,7 @@ def gt_components_for_class(mask_arr: np.ndarray, transform, class_id: int):
     return geoms
 
 
+# vectorize predicted raster into polygons for classes >= min_class_index
 def vectorize_pred_raster(pred_arr: np.ndarray, transform, min_class_index: int):
     classes = [int(c) for c in np.unique(pred_arr) if int(c) >= min_class_index]
     out = defaultdict(list) 
@@ -98,6 +104,7 @@ def vectorize_pred_raster(pred_arr: np.ndarray, transform, min_class_index: int)
     return out
 
 
+# greedily match predicted and gt polygons by IoU threshold
 def greedy_match_iou(pred_polys, gt_polys, iou_thr: float):
     if not pred_polys and not gt_polys:
         return 0, 0, 0, []
@@ -135,6 +142,7 @@ def greedy_match_iou(pred_polys, gt_polys, iou_thr: float):
     return TP, FP, FN, matches
 
 
+# plot and save confusion matrix
 def plot_conf_matrix(cnf: np.ndarray, class_names: list[str], title: str, out_png: str, normalize: bool):
     mat = cnf.astype(float).copy()
     if normalize:
@@ -162,6 +170,7 @@ def plot_conf_matrix(cnf: np.ndarray, class_names: list[str], title: str, out_pn
     plt.close()
 
 
+# evaluate a single tile with metrics
 def evaluate_single_tile(true_file_path: str,
                          pred_file_path: str,
                          metrics_dir_path: str,

@@ -59,6 +59,7 @@ def set_up_parser() -> argparse.ArgumentParser:
 
 
 def compute_class_weights_from_tiles(data_dir):
+    # compute per-class pixel weights from training mask tiles
     train_mask_dir = os.path.join(data_dir, "train", "mask")
     if not os.path.exists(train_mask_dir):
         raise ValueError(f"Training mask directory not found: {train_mask_dir}")

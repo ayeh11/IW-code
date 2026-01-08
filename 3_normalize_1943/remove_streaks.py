@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 
 def read_grayscale_tif(path):
+    # read a single-band tif 
     with rasterio.open(path) as src:
         arr = src.read(1).astype(np.float32)
         profile = src.profile
@@ -15,6 +16,7 @@ def read_grayscale_tif(path):
 
 
 def illumination_correction_gaussian(img, sigma):
+    # remove streaks using gaussian smoothing
     """ remove streaks with Gaussian smoothing """
     img_norm = (img - img.min()) / (img.max() - img.min() + 1e-8)
 

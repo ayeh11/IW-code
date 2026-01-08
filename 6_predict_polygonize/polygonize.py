@@ -20,6 +20,7 @@ COLOR_OMUTI = "#9467bd"
 def ensure_dir(p): os.makedirs(p, exist_ok=True)
 
 def count_polygons(mask):
+    # count number of polygons per target class in a mask
     row = {}
 
     # Omutis
@@ -33,6 +34,7 @@ def count_polygons(mask):
     return row
 
 def append_csv(out_csv, row):
+    # write to csv
     write_header = not os.path.exists(out_csv)
     with open(out_csv, "a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=row.keys())
@@ -41,10 +43,12 @@ def append_csv(out_csv, row):
         w.writerow(row)
 
 def px_area_m2_from_dataset(src):
+    # compute pixel area in m2 
     tr = src.transform
     return abs(tr.a) * abs(tr.e)
 
 def read_thresholds_csv(table_csv, class_name):
+    # read area thresholds from a csv table
     df = pd.read_csv(table_csv)
     row = df[df["Class"].str.contains(class_name, case=False)]
     if row.empty:
@@ -55,12 +59,14 @@ def read_thresholds_csv(table_csv, class_name):
     return minv, maxv
 
 def circle_overlap_ratio(a, b):
+    # compute overlap ratio of two circles relative to smaller
     inter = a.intersection(b).area
     return inter / min(a.area, b.area)
 
 def merge_overlapping_circles_soft(geoms,
                                    thresh_full=0.5,
                                    thresh_soft=0.25):
+    # merge overlapping circle geometries using hard and soft thresholds
     changed = True
     merge_records = []
     while changed:
@@ -102,17 +108,20 @@ def merge_overlapping_circles_soft(geoms,
     return finals, merge_records
 
 def save_png(path, fig):
+    # save figure as png 
     ensure_dir(os.path.dirname(path))
     fig.savefig(path, dpi=150)
     plt.close(fig)
 
 def draw_circles(ax, circles, color, lw=1):
+    # draw circles on axis
     for g in circles:
         x, y = g.exterior.xy
         ax.plot(x, y, color=color, lw=lw, alpha=0.9)
 
 def split_trees_circle(prob3, mask, px_area_m2, min_area_px,
                        prob_thr=0.3, min_dist=3):
+    # detect tree centers from probability map and create circles
     region = prob3 > prob_thr
     if not region.any():
         return mask
@@ -142,6 +151,7 @@ def split_trees_circle(prob3, mask, px_area_m2, min_area_px,
     return refined
 
 def filter_omutis(mask, px_area_m2, thresholds_csv, class_id=2, base_name="tile"):
+    # filter omuti regions by area thresholds from table
     min_area_m2, max_area_m2 = read_thresholds_csv(thresholds_csv, "Omuti")
     omutis = (mask == class_id)
     if not omutis.any():
@@ -164,6 +174,7 @@ def filter_omutis(mask, px_area_m2, thresholds_csv, class_id=2, base_name="tile"
 
 
 def process_tile(in_tif, prob_npy, out_tif, min_area_table, prob_threshold, peak_min_distance):
+    # process single tile
     with rasterio.open(in_tif) as src:
         mask = src.read(1)
         meta = src.meta.copy()

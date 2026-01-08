@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 
 def load_thresholds(thresholds_arg):
+    # load thresholds from file
     if thresholds_arg.endswith(".csv"):
         df = pd.read_csv(thresholds_arg)
         if "Class" in df.columns and "OtsuThreshold_m2" in df.columns:
@@ -17,6 +18,7 @@ def load_thresholds(thresholds_arg):
         raise ValueError("Must be JSON string, JSON file, or CSV file.")
 
 def filter_polygons(input_path, output_path, class_field, thresholds):
+    # filter polygons by class-specific area thresholds and write output
     gdf = gpd.read_file(input_path)
 
     if gdf.crs is not None and gdf.crs.is_geographic:

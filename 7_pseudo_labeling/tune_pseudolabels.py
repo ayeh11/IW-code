@@ -33,6 +33,7 @@ def ensure_dir(p: str) -> None:
 
 
 def vectorize_masks(mask_dir: str, background=0) -> gpd.GeoDataFrame:
+    # vectorize mask tifs into polygons for analysis
     files = sorted(glob.glob(os.path.join(mask_dir, "*.tif")))
     if not files:
         raise SystemExit(f"No .tif masks found in {mask_dir}")
@@ -54,6 +55,7 @@ def vectorize_masks(mask_dir: str, background=0) -> gpd.GeoDataFrame:
 
 
 def load_predictions(pred_dir: str) -> gpd.GeoDataFrame:
+    # load predicted mask tifs and vectorize into geodataframe
     tif_files = sorted(glob.glob(os.path.join(pred_dir, "*.tif")))
 
     if tif_files:
@@ -76,6 +78,7 @@ def load_predictions(pred_dir: str) -> gpd.GeoDataFrame:
 
 
 def compute_empirical_pvalues(train_gdf, pred_gdf):
+    # compute empirical p-values comparing predicted polygon areas to training
     if train_gdf.crs is None:
         raise SystemExit("Train polygons lack CRS.")
     if pred_gdf.crs != train_gdf.crs:
@@ -106,6 +109,7 @@ def compute_empirical_pvalues(train_gdf, pred_gdf):
 
 
 def polygon_iou(a, b):
+    # compute intersection-over-union for two polygons
     inter = a.intersection(b).area
     if inter == 0:
         return 0.0
@@ -114,6 +118,7 @@ def polygon_iou(a, b):
 
 
 def score_against_val(kept_gdf, val_gdf, iou_thr=0.5):
+    # score kept pseudo labels against validation polygons using IoU matching
     if kept_gdf.crs != val_gdf.crs:
         val_gdf = val_gdf.to_crs(kept_gdf.crs)
     classes = sorted(val_gdf[CLASS_COL].unique())
@@ -192,6 +197,7 @@ def score_against_val(kept_gdf, val_gdf, iou_thr=0.5):
 
 
 def plot_heatmap(df, value_col, out_png, title):
+    # plot heatmap of ranges
     piv = df.pivot_table(index="lower", columns="upper", values=value_col)
     plt.imshow(piv.values, aspect="auto", origin="lower")
     plt.colorbar(label=value_col)
