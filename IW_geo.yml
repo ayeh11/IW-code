@@ -1,0 +1,41 @@
+name: IW_geo
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - libgfortran
+  - libopenblas
+  - llvm-openmp
+
+  - numpy
+  - pandas
+  - rasterio
+  - geopandas
+  - shapely
+  - fiona
+  - pyproj
+  - matplotlib
+  - scikit-image
+  - scipy
+  - seaborn
+  - xarray
+
+  - gdal
+  - rtree
+  - affine
+  - tifffile
+
+  - jsonschema
+  - tensorboard
+  - packaging
+  - tabulate
+
+  - pip
+  - pip:
+    - tqdm
+    - albumentations
+    - einops
+    - lightly
+    - lightly-utils

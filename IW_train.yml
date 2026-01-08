@@ -1,0 +1,43 @@
+name: IW_train
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+
+dependencies:
+  - python=3.10
+  - pip
+
+  # Core scientific stack
+  - numpy
+  - scipy
+  - pandas
+  - tqdm
+
+  # PyTorch + CUDA (Linux only)
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.6
+
+  # Lightning stack
+  - pytorch-lightning
+  - lightning
+  - tensorboard
+
+  # TorchGeo WITHOUT GDAL dependencies
+  - torchgeo
+
+  # Logging utilities
+  - packaging
+
+  # Extra utilities (optional)
+  - tabulate
+
+  # Python-only packages (safe)
+  - pip:
+      - segmentation-models-pytorch
+      - albumentations
+      - einops
+      - lightly
+      - lightly-utils
